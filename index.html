@@ -39,6 +39,18 @@
       <h3>不会的单词（按字母排序）</h3><p id="emptyUnknown" class="muted hidden">太好了，没有标记为“不会”的单词。</p><div class="table-wrap"><table id="unknownTable"><thead><tr><th>英文</th><th>中文释义</th><th>词性</th></tr></thead><tbody></tbody></table></div>
     </section>
   </main>
+
+  <aside id="unknownExportPanel" class="unknown-export-panel hidden" aria-label="不会词汇统计和导出">
+    <div id="unknownCount" class="unknown-count" aria-live="polite">不会的单词：0 个</div>
+    <button id="togglePracticeExports" class="primary export-toggle" type="button" aria-expanded="false" aria-controls="practiceExportMenu">导出默写练习</button>
+    <div id="practiceExportMenu" class="practice-export-menu hidden">
+      <button id="exportEnToZh" class="secondary" type="button">导出英译中练习</button>
+      <button id="exportZhToEn" class="secondary" type="button">导出中译英练习</button>
+      <button id="exportBothPractice" class="secondary" type="button">导出两份文件</button>
+    </div>
+    <p id="practiceExportMessage" class="export-message" role="status" aria-live="polite"></p>
+  </aside>
+
   <footer>数据仅保存在当前浏览器的本地存储中。清除浏览器站点数据会删除进度，请先导出备份。</footer>
   <script src="cet4-preloaded.js"></script>
   <script src="app.js"></script>

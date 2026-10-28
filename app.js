@@ -2,7 +2,7 @@
   'use strict';
   const KEY = 'cet4-vocabulary-test-v1';
   const $ = id => document.getElementById(id);
-  const ui = { welcome: $('welcomeView'), test: $('testView'), result: $('resultView'), status: $('libraryStatus'), input: $('csvInput'), counter: $('counter'), percent: $('percent'), bar: $('progressBar'), word: $('word'), meaning: $('meaning'), pos: $('pos'), know: $('knowBtn'), unknown: $('unknownBtn'), summary: $('summary'), tbody: document.querySelector('#unknownTable tbody'), unknownTable: $('unknownTable'), empty: $('emptyUnknown') };
+  const ui = { welcome: $('welcomeView'), test: $('testView'), result: $('resultView'), status: $('libraryStatus'), input: $('csvInput'), counter: $('counter'), percent: $('percent'), bar: $('progressBar'), word: $('word'), meaning: $('meaning'), pos: $('pos'), know: $('knowBtn'), unknown: $('unknownBtn'), summary: $('summary'), tbody: document.querySelector('#unknownTable tbody'), unknownTable: $('unknownTable'), empty: $('emptyUnknown'), exportPanel: $('unknownExportPanel'), unknownCount: $('unknownCount'), exportToggle: $('togglePracticeExports'), exportMenu: $('practiceExportMenu'), exportMessage: $('practiceExportMessage') };
   let state = load();
   if (!state && Array.isArray(window.CET4_PRELOADED_LIBRARY?.words)) {
     state = { words: window.CET4_PRELOADED_LIBRARY.words, answers: {}, source: window.CET4_PRELOADED_LIBRARY.source, importedAt: window.CET4_PRELOADED_LIBRARY.importedAt };
@@ -17,9 +17,29 @@
   function normalize(word) { return word.trim().toLowerCase().replace(/\s+/g, ' '); }
   function answeredCount() { return Object.keys(state.answers).length; }
   function current() { return state.words.find(w => !Object.hasOwn(state.answers, w.word)); }
+  function unknownWords() {
+    if (!state) return [];
+    const unique = new Map();
+    state.words.forEach(w => {
+      if (state.answers[w.word]?.value === 'unknown' && !unique.has(w.word)) unique.set(w.word, w);
+    });
+    return [...unique.values()].sort((a, b) => a.word.localeCompare(b.word, 'en'));
+  }
+  function renderUnknownPanel() {
+    ui.exportPanel.classList.toggle('hidden', !state);
+    if (!state) return;
+    ui.unknownCount.textContent = `不会的单词：${unknownWords().length} 个`;
+  }
+  function setExportMessage(message) { ui.exportMessage.textContent = message; }
+  function togglePracticeMenu(open = ui.exportMenu.classList.contains('hidden')) {
+    ui.exportMenu.classList.toggle('hidden', !open);
+    ui.exportToggle.setAttribute('aria-expanded', String(open));
+    document.body.classList.toggle('export-menu-open', open);
+  }
   function sourceText() { return state ? `已加载 ${state.words.length.toLocaleString()} 个词条 · ${state.source || '未注明来源'}` : '尚未加载词库'; }
   function render() {
     ui.status.textContent = sourceText();
+    renderUnknownPanel();
     if (!state) { ui.welcome.classList.remove('hidden'); ui.test.classList.add('hidden'); ui.result.classList.add('hidden'); return; }
     ui.welcome.classList.add('hidden');
     if (answeredCount() === state.words.length) return renderResult();
@@ -34,17 +54,49 @@
     const w = current(); if (!w) return;
     ui.know.disabled = ui.unknown.disabled = true;
     state.answers[w.word] = { value, answeredAt: new Date().toISOString() }; save();
+    setExportMessage('');
     ui.know.disabled = ui.unknown.disabled = false; render();
   }
   function renderResult() {
     ui.test.classList.add('hidden'); ui.result.classList.remove('hidden');
     const total = state.words.length, known = Object.values(state.answers).filter(a => a.value === 'known').length, unknown = total - known;
     ui.summary.innerHTML = `<div class="stat">词库总数<b>${total}</b></div><div class="stat">已掌握<b>${known} · ${pct(known,total)}</b></div><div class="stat">不会<b>${unknown} · ${pct(unknown,total)}</b></div>`;
-    const rows = state.words.filter(w => state.answers[w.word]?.value === 'unknown').sort((a,b) => a.word.localeCompare(b.word, 'en'));
+    const rows = unknownWords();
     ui.tbody.innerHTML = rows.map(w => `<tr><td>${esc(w.word)}</td><td>${esc(w.meaning)}</td><td>${esc(w.pos)}</td></tr>`).join('');
     ui.empty.classList.toggle('hidden', rows.length !== 0); ui.unknownTable.classList.toggle('hidden', rows.length === 0);
   }
   function pct(n, total) { return `${(n / total * 100).toFixed(1)}%`; }
+  function practiceCsv(kind, data) {
+    const enToZh = kind === 'en-to-zh';
+    const header = enToZh ? ['序号', '英文单词', '中文释义（默写）', '词性'] : ['序号', '中文释义', '英文单词（默写）', '词性'];
+    const rows = data.map((w, index) => enToZh ? [index + 1, w.word, '', w.pos] : [index + 1, w.meaning, '', w.pos]);
+    return '\uFEFF' + [header, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n');
+  }
+  function exportPractice(kind) {
+    const data = unknownWords();
+    if (!data.length) {
+      setExportMessage('目前还没有选择“不会”的单词，暂无可导出的练习。');
+      return false;
+    }
+    if (kind === 'en-to-zh') {
+      download('CET4_不会词汇_英译中.csv', practiceCsv(kind, data), 'text/csv;charset=utf-8');
+      setExportMessage(`已导出英译中练习，共 ${data.length} 个单词。`);
+    } else {
+      download('CET4_不会词汇_中译英.csv', practiceCsv(kind, data), 'text/csv;charset=utf-8');
+      setExportMessage(`已导出中译英练习，共 ${data.length} 个单词。`);
+    }
+    return true;
+  }
+  function exportBothPractice() {
+    const data = unknownWords();
+    if (!data.length) {
+      setExportMessage('目前还没有选择“不会”的单词，暂无可导出的练习。');
+      return;
+    }
+    download('CET4_不会词汇_英译中.csv', practiceCsv('en-to-zh', data), 'text/csv;charset=utf-8');
+    download('CET4_不会词汇_中译英.csv', practiceCsv('zh-to-en', data), 'text/csv;charset=utf-8');
+    setExportMessage(`已导出两份默写练习，每份 ${data.length} 个单词。`);
+  }
   function parseCsv(text) {
     const rows = []; let row = [], value = '', quote = false;
     for (let i=0; i<text.length; i++) { const c=text[i], next=text[i+1]; if (c === '"') { if (quote && next === '"') { value+='"'; i++; } else quote=!quote; } else if (c === ',' && !quote) { row.push(value); value=''; } else if ((c === '\n' || c === '\r') && !quote) { if (c === '\r' && next === '\n') i++; row.push(value); if (row.some(x => x.trim())) rows.push(row); row=[]; value=''; } else value+=c; }
@@ -73,6 +125,10 @@
   $('downloadTemplate').onclick = () => download('cet4-vocabulary-template.csv', template(), 'text/csv;charset=utf-8');
   ui.input.onchange = e => e.target.files[0] && importCsv(e.target.files[0]);
   ui.know.onclick = () => answer('known'); ui.unknown.onclick = () => answer('unknown');
+  ui.exportToggle.onclick = () => togglePracticeMenu();
+  $('exportEnToZh').onclick = () => exportPractice('en-to-zh');
+  $('exportZhToEn').onclick = () => exportPractice('zh-to-en');
+  $('exportBothPractice').onclick = exportBothPractice;
   $('exportCsv').onclick = () => { const data=state.words.filter(w=>state.answers[w.word]?.value==='unknown').sort((a,b)=>a.word.localeCompare(b.word,'en')); download('cet4-不会词.csv', '\uFEFFword,meaning,part_of_speech\n'+data.map(w=>[w.word,w.meaning,w.pos].map(csvCell).join(',')).join('\n'), 'text/csv;charset=utf-8'); };
   $('exportBackup').onclick = () => download('cet4-测试结果备份.json', JSON.stringify(state, null, 2), 'application/json;charset=utf-8');
   function template() { return 'word,meaning,part_of_speech\nabandon,放弃；遗弃,verb\nability,能力；才能,noun\naboard,在船（或飞机、火车）上,adverb\nabsence,缺席；不存在,noun\nabsolute,绝对的；完全的,adjective\nabsorb,吸收；理解,verb\nacademic,学术的；学院的,adjective\naccess,进入；使用权,noun\naccommodate,容纳；适应,verb\nachieve,实现；达到,verb\nacquire,获得；习得,verb\nadapt,适应；改编,verb\n'; }
