@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="本地 CET-4 词汇自测工具">
+  <title>CET-4 词汇自测</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header><h1>CET-4 词汇自测</h1><p id="libraryStatus" class="muted" aria-live="polite"></p></header>
+
+    <section id="welcomeView" class="card">
+      <h2>导入其他合法词库</h2>
+      <p>已预装 ECDICT 的 CET4 标记词库；如需替换，可导入自行合法取得的 CSV。每行必须包含英文、中文释义、词性。</p>
+      <div class="source-note">
+        <p><strong>预装词库：</strong>ECDICT（MIT License）中 tag 包含 <code>cet4</code> 的条目，含中文释义；词性优先取 ECDICT 的 pos，缺失时由释义词性标记推断。教育部考试院公开的 2016 大纲仅提供词形、不提供中文释义或词性。</p>
+        <a href="https://cet.neea.cn/res/Home/1704/55b02330ac17274664f06d9d3db8249d.pdf" target="_blank" rel="noopener">打开教育部考试院大纲 PDF</a>
+      </div>
+      <div class="actions"><button id="downloadTemplate" class="secondary">下载 CSV 模板（含 12 条测试数据）</button><label class="button primary" for="csvInput">选择并导入 CSV</label><input id="csvInput" type="file" accept=".csv,text/csv" hidden></div>
+      <p class="hint">列名可用：<code>word, meaning, part_of_speech</code>（推荐），或 <code>英文, 中文释义, 词性</code>。重复英文会合并释义/词性；英文统一为小写。导入后页面会显示实际加载数。</p>
+      <details><summary>合法导入与备份说明</summary><p>请确认你拥有词表及中文释义的使用权。导入前可在 CSV 首行后的数据中使用逗号和双引号；如释义内含逗号，必须用双引号包住。完成后可下载“不会词 CSV”和“完整结果备份 JSON”。JSON 可留作记录或恢复参考；为保护已答不可更改原则，本版本不提供把备份重新写回正在进行测试的功能。</p></details>
+    </section>
+
+    <section id="testView" class="card hidden" aria-live="polite">
+      <div class="progress-row"><span id="counter"></span><span id="percent"></span></div>
+      <div class="track"><div id="progressBar"></div></div>
+      <p class="label">英文单词</p><h2 id="word" class="word"></h2>
+      <p class="label">中文释义</p><p id="meaning" class="meaning"></p>
+      <p id="pos" class="pos"></p>
+      <p class="rule">每个词必须作答；答案保存后立即进入下一词，不能返回或修改。</p>
+      <div class="answer-actions"><button id="knowBtn" class="know">会</button><button id="unknownBtn" class="unknown">不会</button></div>
+    </section>
+
+    <section id="resultView" class="card hidden">
+      <h2>测试完成</h2><div id="summary" class="summary"></div>
+      <div class="actions"><button id="exportCsv" class="primary">导出不会词 CSV</button><button id="exportBackup" class="secondary">导出完整结果备份 JSON</button></div>
+      <h3>不会的单词（按字母排序）</h3><p id="emptyUnknown" class="muted hidden">太好了，没有标记为“不会”的单词。</p><div class="table-wrap"><table id="unknownTable"><thead><tr><th>英文</th><th>中文释义</th><th>词性</th></tr></thead><tbody></tbody></table></div>
+    </section>
+  </main>
+  <footer>数据仅保存在当前浏览器的本地存储中。清除浏览器站点数据会删除进度，请先导出备份。</footer>
+  <script src="cet4-preloaded.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
