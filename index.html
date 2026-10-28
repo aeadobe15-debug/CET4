@@ -15,8 +15,7 @@
       <h2>导入其他合法词库</h2>
       <p>已预装 ECDICT 的 CET4 标记词库；如需替换，可导入自行合法取得的 CSV。每行必须包含英文、中文释义、词性。</p>
       <div class="source-note">
-        <p><strong>预装词库：</strong>ECDICT（MIT License）中 tag 包含 <code>cet4</code> 的条目，含中文释义；词性优先取 ECDICT 的 pos，缺失时由释义词性标记推断。教育部考试院公开的 2016 大纲仅提供词形、不提供中文释义或词性。</p>
-        <a href="https://cet.neea.cn/res/Home/1704/55b02330ac17274664f06d9d3db8249d.pdf" target="_blank" rel="noopener">打开教育部考试院大纲 PDF</a>
+        <p><strong>预装词库：</strong>ECDICT（MIT License）中 tag 包含 <code>cet4</code> 的条目，含中文释义；词性优先取 ECDICT 的 pos，缺失时由释义词性标记推断。</p>
       </div>
       <div class="actions"><button id="downloadTemplate" class="secondary">下载 CSV 模板（含 12 条测试数据）</button><label class="button primary" for="csvInput">选择并导入 CSV</label><input id="csvInput" type="file" accept=".csv,text/csv" hidden></div>
       <p class="hint">列名可用：<code>word, meaning, part_of_speech</code>（推荐），或 <code>英文, 中文释义, 词性</code>。重复英文会合并释义/词性；英文统一为小写。导入后页面会显示实际加载数。</p>
