@@ -72,6 +72,11 @@
     const rows = data.map((w, index) => enToZh ? [index + 1, w.word, '', w.pos] : [index + 1, w.meaning, '', w.pos]);
     return '\uFEFF' + [header, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n');
   }
+  function bilingualCsv(data) {
+    const header = ['序号', '英文单词', '中文释义', '词性'];
+    const rows = data.map((w, index) => [index + 1, w.word, w.meaning, w.pos]);
+    return '\uFEFF' + [header, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n');
+  }
   function exportPractice(kind) {
     const data = unknownWords();
     if (!data.length) {
@@ -86,6 +91,15 @@
       setExportMessage(`已导出中译英练习，共 ${data.length} 个单词。`);
     }
     return true;
+  }
+  function exportBilingual() {
+    const data = unknownWords();
+    if (!data.length) {
+      setExportMessage('目前还没有选择“不会”的单词，暂无可导出的中英对照表。');
+      return;
+    }
+    download('CET4_不会词汇_中英对照.csv', bilingualCsv(data), 'text/csv;charset=utf-8');
+    setExportMessage(`已导出中英对照表，共 ${data.length} 个单词。`);
   }
   function exportBothPractice() {
     const data = unknownWords();
@@ -128,6 +142,7 @@
   ui.exportToggle.onclick = () => togglePracticeMenu();
   $('exportEnToZh').onclick = () => exportPractice('en-to-zh');
   $('exportZhToEn').onclick = () => exportPractice('zh-to-en');
+  $('exportBilingual').onclick = exportBilingual;
   $('exportBothPractice').onclick = exportBothPractice;
   $('exportCsv').onclick = () => { const data=state.words.filter(w=>state.answers[w.word]?.value==='unknown').sort((a,b)=>a.word.localeCompare(b.word,'en')); download('cet4-不会词.csv', '\uFEFFword,meaning,part_of_speech\n'+data.map(w=>[w.word,w.meaning,w.pos].map(csvCell).join(',')).join('\n'), 'text/csv;charset=utf-8'); };
   $('exportBackup').onclick = () => download('cet4-测试结果备份.json', JSON.stringify(state, null, 2), 'application/json;charset=utf-8');
